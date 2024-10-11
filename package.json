@@ -1,6 +1,6 @@
 {
   "name": "fronti",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "your timesaver to create new projects",
   "type": "module",
   "main": "index.js",
