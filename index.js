@@ -3,9 +3,43 @@
 import inquirer from "inquirer";
 import chalk from "chalk";
 import { spawn } from "child_process";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const { version } = require("./package.json");
+import https from "https";
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const packageJsonPath = path.join(__dirname, "package.json");
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+const version = packageJson.version;
+
+// Function to check for the latest version from npm registry
+function checkLatestVersion() {
+  const packageName = "fronti"; // Replace with your package name
+
+  const url = `https://registry.npmjs.org/${packageName}/latest`;
+
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (response) => {
+        let data = "";
+
+        response.on("data", (chunk) => {
+          data += chunk;
+        });
+
+        response.on("end", () => {
+          const latestVersion = JSON.parse(data).version;
+          resolve(latestVersion);
+        });
+      })
+      .on("error", (err) => {
+        reject(err);
+      });
+  });
+}
 
 // Banner
 console.log();
@@ -24,25 +58,42 @@ console.log(
 console.log(
   "\x1b[38;2;255;204;0m     ██      ██   ██  ██████  ██   ████    ██    ██   \x1b[0m"
 );
-console.log(`\nCurrent version: ${chalk.green(version)}\n`); // Display the current package version
 
-// Define questions
-const questions = [
-  {
-    type: "list",
-    name: "framework",
-    message: "Which framework would you like to install?",
-    choices: [
-      { name: chalk.yellow("React"), value: "React" },
-      { name: chalk.yellow("Next.js"), value: "Next.js" },
-      { name: chalk.yellow("Vue.js"), value: "Vue.js" },
-    ],
-  },
-];
+// Check latest version before displaying the menu
+checkLatestVersion()
+  .then((latestVersion) => {
+    if (version !== latestVersion) {
+      console.log(
+        `${chalk.yellow("  A new version of Fronti is available!")} ${chalk.red(
+          version
+        )} → ${chalk.green(latestVersion)}`
+      );
+      console.log(`  Run ${chalk.cyan(" npm install -g fronti")} to update.\n`);
+    } else {
+      console.log(
+        `${chalk.green(
+          "  You are using the latest version of Fronti! (" + version + ")"
+        )}\n`
+      );
+    }
 
-// Show the prompt
-inquirer
-  .prompt(questions)
+    // Define questions after the version check
+    const questions = [
+      {
+        type: "list",
+        name: "framework",
+        message: "Which framework would you like to install?",
+        choices: [
+          { name: chalk.yellow("React"), value: "React" },
+          { name: chalk.yellow("Next.js"), value: "Next.js" },
+          { name: chalk.yellow("Vue.js"), value: "Vue.js" },
+        ],
+      },
+    ];
+
+    // Show the prompt after the version check
+    return inquirer.prompt(questions);
+  })
   .then((answers) => {
     const framework = answers.framework;
 
@@ -52,11 +103,11 @@ inquirer
     switch (framework) {
       case "React":
         command = "npx";
-        args = ["create-react-app"];
+        args = ["create-react-app", "my-app"];
         break;
       case "Next.js":
         command = "npx";
-        args = ["create-next-app"];
+        args = ["create-next-app", "my-app"];
         break;
       case "Vue.js":
         command = "npm";
