@@ -52,11 +52,11 @@ inquirer
     switch (framework) {
       case "React":
         command = "npx";
-        args = ["create-react-app", "my-app"];
+        args = ["create-react-app"];
         break;
       case "Next.js":
         command = "npx";
-        args = ["create-next-app", "my-app"];
+        args = ["create-next-app"];
         break;
       case "Vue.js":
         command = "npm";
